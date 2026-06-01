@@ -41,8 +41,8 @@ jobs:
           key=000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f
           nonce=202122232425262728292a2b2c2d2e2f
           python3 -c "import sys; sys.stdout.buffer.write(bytes(((i*13+9)&255) for i in range(64)))" > plain.bin
-          cargo run --release --bin v2tool -- sealp "$key" "$nonce" < plain.bin > sealed.bin
-          cargo run --release --bin v2tool -- openp "$key" "$nonce" < sealed.bin > recovered.bin
+          cargo run --release --quiet --bin v2tool -- sealp "$key" "$nonce" < plain.bin > sealed.bin
+          cargo run --release --quiet --bin v2tool -- openp "$key" "$nonce" < sealed.bin > recovered.bin
           cmp plain.bin recovered.bin
           echo "Streaming roundtrip: PASS"
 
@@ -54,6 +54,14 @@ jobs:
           $nonce='202122232425262728292a2b2c2d2e2f'
           $plain=[byte[]](0..63 | ForEach-Object { ($_ * 13 + 9) -band 255 })
           [IO.File]::WriteAllBytes('plain.bin', $plain)
-          cmd /c "cargo run --release --bin v2tool -- sealp $key $nonce < plain.bin > sealed.bin"
-          cmd /c "cargo run --release --bin v2tool -- openp $key $nonce < sealed.bin > recovered.bin"
-          if (-not (Compare-Object ([IO.File]::ReadAllBytes('plain.bin')) ([IO.File]::ReadAllBytes('recovered.bin')) -SyncWindow 0)) { Write-Host 'Streaming roundtrip: PASS' } else { throw 'Streaming roundtrip: FAIL' }
+
+          $v2tool = "target\release\v2tool.exe"
+
+          # Use temp files for reliable piping on Windows
+          & $v2tool sealp $key $nonce 2>$null < plain.bin | Set-Content -AsByteStream sealed.bin
+          & $v2tool openp $key $nonce 2>$null < sealed.bin | Set-Content -AsByteStream recovered.bin
+
+          if (Compare-Object ([IO.File]::ReadAllBytes('plain.bin')) ([IO.File]::ReadAllBytes('recovered.bin')) -SyncWindow 0) {
+            throw 'Streaming roundtrip: FAIL'
+          }
+          Write-Host 'Streaming roundtrip: PASS'
