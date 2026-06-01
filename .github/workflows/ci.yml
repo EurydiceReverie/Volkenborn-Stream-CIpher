@@ -56,10 +56,8 @@ jobs:
           [IO.File]::WriteAllBytes('plain.bin', $plain)
 
           $v2tool = "target\release\v2tool.exe"
-
-          # Use temp files for reliable piping on Windows
-          & $v2tool sealp $key $nonce 2>$null < plain.bin | Set-Content -AsByteStream sealed.bin
-          & $v2tool openp $key $nonce 2>$null < sealed.bin | Set-Content -AsByteStream recovered.bin
+          cmd /c "$v2tool sealp $key $nonce < plain.bin > sealed.bin"
+          cmd /c "$v2tool openp $key $nonce < sealed.bin > recovered.bin"
 
           if (Compare-Object ([IO.File]::ReadAllBytes('plain.bin')) ([IO.File]::ReadAllBytes('recovered.bin')) -SyncWindow 0) {
             throw 'Streaming roundtrip: FAIL'

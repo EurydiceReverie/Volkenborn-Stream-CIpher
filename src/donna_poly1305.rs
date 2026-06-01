@@ -141,11 +141,12 @@ impl Poly1305State {
 
         /* Finalization — exact C mirror */
         let f0 = (h0 as u64 | ((h1 as u64) << 26)).wrapping_add(self.pad0 as u64);
+        let carry0 = if f0 < self.pad0 as u64 { 1u32 } else { 0 };
         let f1 = ((h1 >> 6) as u64 | ((h2 as u64) << 20) | ((h3 as u64) << 46) | ((h4 as u64) << 8))
             .wrapping_add(self.pad1 as u64);
         let t0 = f0 as u32;
-        let t1 = (f0 >> 32) as u32 + f1 as u32 + if f0 < self.pad0 as u64 { 1 } else { 0 };
-        let t2 = (f1 >> 32 as u64).wrapping_add(self.pad2 as u64).wrapping_add(if t1 < f1 as u32 { 1 } else { 0 }) as u32;
+        let t1 = (f0 >> 32) as u32 + f1 as u32 + carry0;
+        let t2 = ((f1 >> 32) as u32).wrapping_add(self.pad2).wrapping_add(if t1 < f1 as u32 { 1 } else { 0 });
         let t3 = self.pad3.wrapping_add(if t2 < self.pad2 { 1 } else { 0 });
 
         let mut out = [0u8; 16];
