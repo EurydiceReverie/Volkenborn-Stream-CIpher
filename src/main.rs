@@ -1,6 +1,6 @@
 use std::env;
 use std::io::{self, Read, Write};
-use volkenborn2::{open, open_auto_stream, openp_stream, seal, seal_auto_stream, sealp_stream, Volkenborn2, IV_BYTES, KEY_BYTES};
+use volkenborn2::{open, open_auto_stream, openp_stream, seal, seal_auto_stream, sealp_stream, Volkenborn2, IV_BYTES, KEY_BYTES, TAG_BYTES};
 
 fn hex_val(b: u8) -> Option<u8> {
     match b {
