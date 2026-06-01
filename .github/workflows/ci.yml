@@ -40,11 +40,10 @@ jobs:
         run: |
           key=000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f
           nonce=202122232425262728292a2b2c2d2e2f
-          python3 -c "import sys; sys.stdout.buffer.write(bytes(((i*13+9)&255) for i in range(64)))" > plain.bin
-          cargo run --release --quiet --bin v2tool -- sealp "$key" "$nonce" < plain.bin > sealed.bin
-          cargo run --release --quiet --bin v2tool -- openp "$key" "$nonce" < sealed.bin > recovered.bin
-          cmp plain.bin recovered.bin
-          echo "Streaming roundtrip: PASS"
+          dd if=/dev/urandom bs=64 count=1 2>/dev/null > plain.bin
+          target/release/v2tool sealp "$key" "$nonce" < plain.bin > sealed.bin 2>/dev/null
+          target/release/v2tool openp "$key" "$nonce" < sealed.bin > recovered.bin 2>/dev/null
+          cmp plain.bin recovered.bin && echo "Streaming roundtrip: PASS"
 
       - name: Streaming roundtrip on Windows
         if: runner.os == 'Windows'
@@ -52,14 +51,12 @@ jobs:
         run: |
           $key='000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f'
           $nonce='202122232425262728292a2b2c2d2e2f'
-          $plain=[byte[]](0..63 | ForEach-Object { ($_ * 13 + 9) -band 255 })
+          $rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+          $plain = New-Object byte[] 64
+          $rng.GetBytes($plain)
           [IO.File]::WriteAllBytes('plain.bin', $plain)
-
           $v2tool = "target\release\v2tool.exe"
-          cmd /c "$v2tool sealp $key $nonce < plain.bin > sealed.bin"
-          cmd /c "$v2tool openp $key $nonce < sealed.bin > recovered.bin"
-
-          if (Compare-Object ([IO.File]::ReadAllBytes('plain.bin')) ([IO.File]::ReadAllBytes('recovered.bin')) -SyncWindow 0) {
-            throw 'Streaming roundtrip: FAIL'
-          }
+          cmd /c "$v2tool sealp $key $nonce < plain.bin > sealed.bin 2>nul"
+          cmd /c "$v2tool openp $key $nonce < sealed.bin > recovered.bin 2>nul"
+          if (Compare-Object ([IO.File]::ReadAllBytes('plain.bin')) ([IO.File]::ReadAllBytes('recovered.bin')) -SyncWindow 0) { throw 'FAIL' }
           Write-Host 'Streaming roundtrip: PASS'
