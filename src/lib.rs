@@ -423,12 +423,12 @@ pub fn openp_stream<R: std::io::Read, W: std::io::Write>(
             win_len += copy;
             src += copy;
 
-            /* If window is full, process first 32 bytes as ciphertext, shift last 32 to front */
+            /* If window is full, update MAC with ciphertext BEFORE decrypting */
             if win_len == 64 {
+                poly0.update(&window[..32]);
+                poly1.update(&window[..32]);
                 ctx.encrypt(&window[..32], &mut out[..32]);
                 output.write_all(&out[..32])?;
-                poly0.update(&out[..32]);
-                poly1.update(&out[..32]);
                 window.copy_within(32..64, 0);
                 win_len = 32;
             }
@@ -440,10 +440,10 @@ pub fn openp_stream<R: std::io::Read, W: std::io::Write>(
     let cipher_bytes = win_len - 32;
 
     if cipher_bytes > 0 {
+        poly0.update(&window[..cipher_bytes]);
+        poly1.update(&window[..cipher_bytes]);
         ctx.encrypt(&window[..cipher_bytes], &mut out[..cipher_bytes]);
         output.write_all(&out[..cipher_bytes])?;
-        poly0.update(&out[..cipher_bytes]);
-        poly1.update(&out[..cipher_bytes]);
     }
 
     let received_tag: [u8; 32] = window[cipher_bytes..cipher_bytes + 32].try_into().unwrap();
