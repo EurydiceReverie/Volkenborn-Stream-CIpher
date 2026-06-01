@@ -145,7 +145,7 @@ impl Poly1305State {
         let f1 = ((h1 >> 6) as u64 | ((h2 as u64) << 20) | ((h3 as u64) << 46) | ((h4 as u64) << 8))
             .wrapping_add(self.pad1 as u64);
         let t0 = f0 as u32;
-        let t1 = (f0 >> 32).wrapping_add(f1).wrapping_add(carry0 as u64) as u32;
+        let t1 = ((f0 >> 32) + f1 + carry0 as u64) as u32;
         let t2 = ((f1 >> 32) as u32).wrapping_add(self.pad2).wrapping_add(if t1 < f1 as u32 { 1 } else { 0 });
         let t3 = self.pad3.wrapping_add(if t2 < self.pad2 { 1 } else { 0 });
 
