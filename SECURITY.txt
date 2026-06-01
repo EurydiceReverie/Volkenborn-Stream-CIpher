@@ -1,0 +1,15 @@
+Volkenborn-2 Security Notice
+============================
+
+This repository contains an experimental, novel stream cipher research prototype.
+It is not a substitute for audited cryptography such as AES-GCM, ChaCha20-Poly1305,
+or other standardized constructions.
+
+This Rust implementation is intentionally independent from the C implementation:
+it does not link to, generate from, or include C source files.
+
+Cryptographic status:
+- not standardized;
+- not peer reviewed;
+- not third-party audited;
+- should be treated as research-only until extensive cryptanalysis is complete.

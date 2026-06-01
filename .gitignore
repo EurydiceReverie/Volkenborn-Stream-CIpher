@@ -1,0 +1,16 @@
+# Rust
+/target/
+Cargo.lock
+
+# Binaries
+*.exe
+*.o
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+*.swp
+*.swo
+*~

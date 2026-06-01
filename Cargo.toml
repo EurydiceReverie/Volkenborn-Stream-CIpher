@@ -1,0 +1,28 @@
+[package]
+name = "volkenborn2"
+version = "0.1.0"
+edition = "2021"
+description = "Volkenborn-2 p-adic stream cipher research-plus-engineering prototype"
+license = "UNLICENSED"
+default-run = "v2tool"
+[lib]
+name = "volkenborn2"
+path = "src/lib.rs"
+
+[[bin]]
+name = "v2tool"
+path = "src/main.rs"
+
+[[bin]]
+name = "v2bench"
+path = "src/bench.rs"
+
+[[bin]]
+name = "v2fuzz"
+path = "src/fuzz.rs"
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
